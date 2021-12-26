@@ -1,8 +1,8 @@
 import Terminal from "terminal-kit";
+import path from 'path'
 import {readFileSync} from "fs";
 
-const config = JSON.parse(readFileSync("package.json"));
-
+const config = JSON.parse(readFileSync(path.posix.dirname(import.meta.url).substr(7) + '/../../package.json'))
 export default class Interface {
     term;
     cb;
