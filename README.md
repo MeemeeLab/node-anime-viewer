@@ -1,4 +1,4 @@
-# node-anime
+# node-anime-viewer
 Nodejs implementation of ani-cli.
 This program requires VLC installed and PATH to VLC executable configured.
 
