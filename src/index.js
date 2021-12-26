@@ -32,6 +32,14 @@ function playVideo(url, selectEpisodeInterface, index) {
     });
 }
 
+Terminal.terminal.on('key', (key) => {
+    if (key === 'CTRL_C') {
+        Terminal.terminal.clear();
+        Terminal.terminal.red('Exiting with exit code 1...');
+        process.exit(1);
+    }
+});
+
 new SearchAnimeInterface(Terminal.terminal, {
     searchAnime: async (query) => {
         const titles = await anime.searchTitle(query);
