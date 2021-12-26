@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import anime from './modules/anime.js';
 import child_process from 'child_process';
 import Terminal from 'terminal-kit';
