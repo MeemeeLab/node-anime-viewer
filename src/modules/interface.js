@@ -25,8 +25,12 @@ export default class Interface {
 export class SearchAnimeInterface extends Interface {
     Init() {
         this.term.white('Search anime: ');
-        this.term.inputField({}, (err, input) => {
+        this.term.inputField({cancelable: true}, (err, input) => {
             if (err) throw err;
+            if (input === undefined) {
+                this.term.white('\n').red('Canceled!');
+                process.exit();
+            }
             this.cb.searchAnime(input);
         })
     }
