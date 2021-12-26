@@ -1,5 +1,5 @@
 {
-  "name": "@meemeelab/node-anime-viewer-test",
+  "name": "node-anime-viewer",
   "version": "1.0.1",
   "description": "View anime from nodejs",
   "main": "src/index.js",
