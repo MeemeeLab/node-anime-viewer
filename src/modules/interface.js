@@ -1,7 +1,7 @@
 import Terminal from "terminal-kit";
 import {readFileSync} from "fs";
 
-const config = JSON.parse(readFileSync("package.json"));
+const config = JSON.parse(readFileSync("../package.json"));
 
 export default class Interface {
     term;
