@@ -89,7 +89,7 @@ new SearchAnimeInterface(Terminal.terminal, {
                                 playVideo(selectedVideo.file, selectEpisodeInterface, index);
                             },
                             getAvailableResolutions: () => {
-                                return availableVideos.getVideos().map(video => video.resolution).sort((a, b) => b - a);
+                                return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
                             }
                         });
                     },

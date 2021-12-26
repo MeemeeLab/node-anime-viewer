@@ -108,6 +108,9 @@ export class AnimeVideoCollection {
     getVideos() {
         return this._rawVideos;
     }
+    getVideosHasResolution() {
+        return this.getVideos().filter(v => !isNaN(v.resolution));
+    }
 }
 
 export class AnimeEpisode {
