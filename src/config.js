@@ -8,3 +8,5 @@ if (process.platform === 'win32') {
 const config = JSON.parse(readFileSync(
   resolve(__dirname, "../../package.json"),
 ));
+
+export default config;
