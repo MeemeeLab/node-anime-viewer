@@ -55,7 +55,7 @@ new SearchAnimeInterface(Terminal.terminal, {
                                         return availableEpisodes;
                                     }
                                 });
-                                const selectedVideo = availableVideos._rawVideos.find(v => v.resolution == resolution);
+                                const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
                                 playVideo(selectedVideo.file, selectEpisodeInterface, index);
                             },
                             selectHighest: () => {
@@ -88,8 +88,8 @@ new SearchAnimeInterface(Terminal.terminal, {
                                 const selectedVideo = availableVideos.byLowResolution();
                                 playVideo(selectedVideo.file, selectEpisodeInterface, index);
                             },
-                            getAvailableResolutions() {
-                                return availableVideos._rawVideos.map(video => video.resolution).sort((a, b) => b - a);
+                            getAvailableResolutions: () => {
+                                return availableVideos.getVideos().map(video => video.resolution).sort((a, b) => b - a);
                             }
                         });
                     },

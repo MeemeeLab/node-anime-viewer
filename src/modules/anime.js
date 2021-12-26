@@ -61,9 +61,21 @@ function generateEncryptAjaxParameters($, id) {
 // CLASSES
 
 export class AnimeVideo {
+    /**
+     * @type {string}
+     */
     file;
+    /**
+     * @type {string}
+     */
     label;
+    /**
+     * @type {number}
+     */
     resolution;
+    /**
+     * @type {string}
+     */
     type;
     constructor(obj) {
         Object.assign(this, obj);
@@ -74,6 +86,7 @@ export class AnimeVideo {
 export class AnimeVideoCollection {
     /**
      * @type {AnimeVideo[]}
+     * @private
      */
     _rawVideos;
 
@@ -91,11 +104,25 @@ export class AnimeVideoCollection {
     byLowResolution() {
         return this._rawVideos.sort((a, b) => a.resolution - b.resolution)[0];
     }
+
+    getVideos() {
+        return this._rawVideos;
+    }
 }
 
 export class AnimeEpisode {
+    /**
+     * @type {AnimeTitle}
+     */
     title;
+    /**
+     * @type {number}
+     */
     episode;
+    /**
+     * @type {string}
+     * @private
+     */
     _embedUrlCache;
     async getEmbedUrl() {
         if (this._embedUrlCache) return this._embedUrlCache;
@@ -133,8 +160,17 @@ export class AnimeEpisode {
 }
 
 export class AnimeTitle {
+    /**
+     * @type {string}
+     */
     title;
+    /**
+     * @type {string}
+     */
     id;
+    /**
+     * @type {number}
+     */
     releaseYear;
     /**
      * Get available episodes
@@ -191,5 +227,8 @@ export async function searchTitle(query) {
 
 export default {
     AnimeTitle,
+    AnimeEpisode,
+    AnimeVideoCollection,
+    AnimeVideo,
     searchTitle
 }
