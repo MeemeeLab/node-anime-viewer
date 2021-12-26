@@ -1,5 +1,5 @@
 {
-  "name": "node-anime",
+  "name": "node-anime-viewer",
   "version": "1.0.0",
   "description": "View anime from nodejs",
   "main": "src/index.js",
@@ -19,5 +19,6 @@
     "terminal-kit": "^2.3.0"
   },
   "repository": "github:MeemeeLab/node-anime",
-  "homepage": "https://github.com/MeemeeLab/node-anime#readme"
+  "homepage": "https://github.com/MeemeeLab/node-anime#readme",
+  "bin": "src/index.js"
 }
