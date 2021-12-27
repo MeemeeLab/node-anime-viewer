@@ -35,7 +35,7 @@ function playVideo(url, selectEpisodeInterface, index) {
 Terminal.terminal.on('key', (key) => {
     if (key === 'CTRL_C') {
         Terminal.terminal.clear();
-        Terminal.terminal.red('Exiting with exit code 1...');
+        Terminal.terminal.red('Exiting with exit code 1...\n');
         process.exit(1);
     }
 });
