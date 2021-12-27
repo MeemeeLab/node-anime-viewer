@@ -1,6 +1,6 @@
 # node-anime-viewer
-Nodejs implementation of ani-cli.
-This program requires VLC installed and PATH to VLC executable configured.
+Nodejs implementation of ani-cli.  
+~~This program requires VLC installed and PATH to VLC executable configured.~~ The program will use default application if VLC is not available.
 
 ### Tested on windows and linux, Pull requests are welcome
 

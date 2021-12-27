@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import anime from './modules/anime.js';
-import child_process from 'child_process';
+import processUtil from './modules/process.js';
 import Terminal from 'terminal-kit';
 import {
     SearchAnimeInterface,
@@ -12,8 +12,7 @@ import {
 } from './modules/interface.js';
 
 function playVideo(url, selectEpisodeInterface, index) {
-    const vlc = child_process.spawn('vlc', [url]);
-    vlc.on('close', () => {
+    function onExit() {
         new VLCExitInterface(Terminal.terminal, {
             playNextEpisode: () => {
                 selectEpisodeInterface.cb.selectEpisode(index + 1);
@@ -29,7 +28,19 @@ function playVideo(url, selectEpisodeInterface, index) {
                 process.exit();
             }
         });
-    });
+    }
+    processUtil.openVLC(url)
+        .then(onExit)
+        .catch(() => {
+            // VLC is not installed
+            processUtil.openDefaultApplication(url)
+                .then(onExit)
+                .catch(() => {
+                    Terminal.terminal.clear();
+                    Terminal.terminal.error('VLC is not installed, please install it first.');
+                    process.exit(1);
+                });
+        });
 }
 
 Terminal.terminal.on('key', (key) => {
