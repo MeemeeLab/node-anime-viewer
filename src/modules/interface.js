@@ -35,10 +35,10 @@ export class DefaultInterface extends Interface {
             if (err) throw err;
             switch (input.selectedIndex) {
                 case 0:
-                    this.cb.searchAnime();
+                    this.cb.searchAnime.call(this);
                     break;
                 case 1:
-                    this.cb.viewHistory();
+                    this.cb.viewHistory.call(this);
                     break;
             }
         });
@@ -47,22 +47,22 @@ export class DefaultInterface extends Interface {
 
 export class HistoryInterface extends Interface {
     Init() {
-        if (this.cb.getAnimes().length === 0) {
+        if (this.cb.getAnimes.call(this).length === 0) {
             this.term.red('No anime in history\n');
             this.term.white('Press any key to continue...\n');
             this.term.once('key', () => {
-                this.cb.back();
+                this.cb.back.call(this);
             });
             return;
         }
         this.term.white('Select an anime from history (Press ESC to go back)\n');
-        this.term.singleColumnMenu(this.cb.getAnimes().map(title => `${title.title} (Episode ${title.episode})`), {cancelable: true}, (err, input) => {
+        this.term.singleColumnMenu(this.cb.getAnimes.call(this).map(title => `${title.title} (Episode ${title.episode})`), {cancelable: true}, (err, input) => {
             if (err) throw err;
             if (input.canceled) {
-                this.cb.back();
+                this.cb.back.call(this);
                 return; 
             }
-            this.cb.playAnime(this.cb.getAnimes()[input.selectedIndex]);
+            this.cb.playAnime(this.cb.getAnimes.call(this)[input.selectedIndex]);
         });
     }
 }
@@ -73,9 +73,9 @@ export class SearchAnimeInterface extends Interface {
         this.term.inputField({cancelable: true}, (err, input) => {
             if (err) throw err;
             if (input === undefined) {
-                this.cb.back();
+                this.cb.back.call(this);
             }
-            this.cb.searchAnime(input);
+            this.cb.searchAnime.call(this, input);
         })
     }
 }
@@ -83,9 +83,9 @@ export class SearchAnimeInterface extends Interface {
 export class SelectAnimeInterface extends Interface {
     Init() {
         this.term.white('Select anime: \n');
-        this.term.singleColumnMenu(this.cb.getAnimeNames(), (err, input) => {
+        this.term.singleColumnMenu(this.cb.getAnimeNames.call(this), (err, input) => {
             if (err) throw err;
-            this.cb.selectAnime(input.selectedIndex);
+            this.cb.selectAnime.call(this, input.selectedIndex);
         })
     }
 }
@@ -93,29 +93,29 @@ export class SelectAnimeInterface extends Interface {
 export class SelectEpisodeInterface extends Interface {
     Init() {
         this.term.white('Select episode: \n');
-        this.term.gridMenu(this.cb.getAvailableEpisodes(), (err, input) => {
+        this.term.gridMenu(this.cb.getAvailableEpisodes.call(this), (err, input) => {
             if (err) throw err;
-            this.cb.selectEpisode(input.selectedIndex);
+            this.cb.selectEpisode.call(this, input.selectedIndex);
         })
     }
 }
 
 export class SelectResolutionInterface extends Interface {
     Init() {
-        const resolutions = this.cb.getAvailableResolutions();
+        const resolutions = this.cb.getAvailableResolutions.call(this);
         if (resolutions.length === 1) {
-            this.cb.selectResolution(resolutions[0]);
+            this.cb.selectResolution.call(this, resolutions[0]);
             return;
         }
         this.term.white('Select resolution: \n');
         this.term.singleColumnMenu(['Highest available', ...resolutions, 'Lowest available'], (err, input) => {
             if (err) throw err;
             if (input.selectedIndex === 0) {
-                this.cb.selectHighest();
+                this.cb.selectHighest.call(this);
             } else if (input.selectedIndex === resolutions.length + 1) {
-                this.cb.selectLowest();
+                this.cb.selectLowest.call(this);
             } else {
-                this.cb.selectResolution(resolutions[input.selectedIndex - 1]);
+                this.cb.selectResolution.call(this, resolutions[input.selectedIndex - 1]);
             }
         });
     }
@@ -127,16 +127,16 @@ export class VLCExitInterface extends Interface {
             if (err) throw err;
             switch (input.selectedIndex) {
                 case 0:
-                    this.cb.playNextEpisode();
+                    this.cb.playNextEpisode.call(this);
                     break;
                 case 1:
-                    this.cb.repeatEpisode();
+                    this.cb.repeatEpisode.call(this);
                     break;
                 case 2:
-                    this.cb.playPreviousEpisode();
+                    this.cb.playPreviousEpisode.call(this);
                     break;
                 case 3:
-                    this.cb.exit();
+                    this.cb.exit.call(this);
                     break;
             }
         });
@@ -145,6 +145,6 @@ export class VLCExitInterface extends Interface {
 
 export class PlayingInterface extends Interface {
     Init() {
-        this.term.white('Currently playing: ').blue(this.cb.getCurrentTitle().title).white(' ').green(this.cb.getCurrentEpisode().episode + '/' + this.cb.getEpisodes().length).white('\n');
+        this.term.white('Currently playing: ').blue(this.cb.getCurrentTitle.call(this).title).white(' ').green(this.cb.getCurrentEpisode.call(this).episode + '/' + this.cb.getEpisodes.call(this).length).white('\n');
     }
 }
