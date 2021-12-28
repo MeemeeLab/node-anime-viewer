@@ -100,6 +100,6 @@ export class VLCExitInterface extends Interface {
 
 export class PlayingInterface extends Interface {
     Init() {
-        this.term.white('Currently playing: ').blue(this.cb.getCurrentTitle().title).white(' ').green(this.cb.getCurrentEpisode().episode + '/' + this.cb.getEpisodes().length).white('\n');
+        this.term.white(process.platform === 'android' ? 'Trying to play: ' : 'Currently playing: ').blue(this.cb.getCurrentTitle().title).white(' ').green(this.cb.getCurrentEpisode().episode + '/' + this.cb.getEpisodes().length).white('\n');
     }
 }
