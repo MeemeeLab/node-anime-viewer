@@ -1,6 +1,6 @@
 import Terminal from "terminal-kit";
 
-import config from '../config.js';
+import { packageConfig } from '../config.js';
 
 export default class Interface {
     term;
@@ -13,12 +13,58 @@ export default class Interface {
         this.term = term;
         this.cb = cb;
         this.term.clear();
-        this.term.white(config.name + ' ').green(config.version + '\n');
-        this.term.white('Copyright (C) 2021 ').blue(config.author);
+        this.term.white(packageConfig.name + ' ').green(packageConfig.version + '\n');
+        this.term.white('Copyright (C) 2021 ').blue(packageConfig.author).white(' and ').yellow('Contributors\n');
         this.term.white('\n\n');
         this.Init();
     }
     Init() {}
+    reInitialize() {
+        this.term.clear();
+        this.term.white(packageConfig.name + ' ').green(packageConfig.version + '\n');
+        this.term.white('Copyright (C) 2021 ').blue(packageConfig.author).white(' and ').yellow('Contributors\n');
+        this.term.white('\n\n');
+        this.Init();
+    }
+}
+
+export class DefaultInterface extends Interface {
+    Init() {
+        this.term.white('What do you want to do next?\n');
+        this.term.singleColumnMenu(['Search anime and play', 'Select anime from history'], (err, input) => {
+            if (err) throw err;
+            switch (input.selectedIndex) {
+                case 0:
+                    this.cb.searchAnime();
+                    break;
+                case 1:
+                    this.cb.viewHistory();
+                    break;
+            }
+        });
+    }
+}
+
+export class HistoryInterface extends Interface {
+    Init() {
+        if (this.cb.getAnimes().length === 0) {
+            this.term.red('No anime in history\n');
+            this.term.white('Press any key to continue...\n');
+            this.term.once('key', () => {
+                this.cb.back();
+            });
+            return;
+        }
+        this.term.white('Select an anime from history (Press ESC to go back)\n');
+        this.term.singleColumnMenu(this.cb.getAnimes().map(title => `${title.title} (Episode ${title.episode})`), {cancelable: true}, (err, input) => {
+            if (err) throw err;
+            if (input.canceled) {
+                this.cb.back();
+                return; 
+            }
+            this.cb.playAnime(this.cb.getAnimes()[input.selectedIndex]);
+        });
+    }
 }
 
 export class SearchAnimeInterface extends Interface {
@@ -27,8 +73,7 @@ export class SearchAnimeInterface extends Interface {
         this.term.inputField({cancelable: true}, (err, input) => {
             if (err) throw err;
             if (input === undefined) {
-                this.term.white('\n').red('Canceled!');
-                process.exit();
+                this.cb.back();
             }
             this.cb.searchAnime(input);
         })

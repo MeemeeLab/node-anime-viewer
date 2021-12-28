@@ -164,7 +164,7 @@ export class AnimeEpisode {
 
 export class AnimeTitle {
     /**
-     * @type {string}
+     * @type {string|null}
      */
     title;
     /**
@@ -172,7 +172,7 @@ export class AnimeTitle {
      */
     id;
     /**
-     * @type {number}
+     * @type {number|null}
      */
     releaseYear;
     /**
@@ -200,6 +200,13 @@ export class AnimeTitle {
         }
 
         return episodes;
+    }
+    static byId(id) {
+        const title = new AnimeTitle();
+        title.id = id;
+        title.title = null;
+        title.releaseYear = null;
+        return title;
     }
 }
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import anime from './modules/anime.js';
+import anime, {AnimeTitle} from './modules/anime.js';
 import processUtil from './modules/process.js';
 import Terminal from 'terminal-kit';
 import {
+    DefaultInterface,
+    HistoryInterface,
     SearchAnimeInterface,
     SelectAnimeInterface,
     SelectEpisodeInterface,
@@ -10,20 +12,22 @@ import {
     PlayingInterface,
     VLCExitInterface
 } from './modules/interface.js';
+import history from './modules/history.js';
 
-function playVideo(url, selectEpisodeInterface, index) {
+function playVideo(url, episodeCallbacks) {
     function onExit() {
         new VLCExitInterface(Terminal.terminal, {
             playNextEpisode: () => {
-                selectEpisodeInterface.cb.selectEpisode(index + 1);
+                episodeCallbacks.next();
             },
             repeatEpisode: () => {
-                selectEpisodeInterface.cb.selectEpisode(index);
+                episodeCallbacks.repeat();
             },
             playPreviousEpisode: () => {
-                selectEpisodeInterface.cb.selectEpisode(index - 1);
+                episodeCallbacks.previous();
             },
             exit: () => {
+                history.dispose();
                 Terminal.terminal.clear();
                 process.exit();
             }
@@ -43,6 +47,104 @@ function playVideo(url, selectEpisodeInterface, index) {
         });
 }
 
+async function showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, episodeCallbacks) { 
+    // TODO: Show go back button on the VLCExitInterface and not quit
+    history.add(selectedEpisode);
+    const availableVideos = (await selectedEpisode.getAvailableVideos()).filterByVideoType('mp4');
+    new SelectResolutionInterface(Terminal.terminal, {
+        selectResolution: (resolution) => {
+            new PlayingInterface(Terminal.terminal, {
+                getCurrentTitle: () => {
+                    return selectedTitle;
+                },
+                getCurrentEpisode: () => {
+                    return selectedEpisode;
+                },
+                getEpisodes: () => {
+                    return availableEpisodes;
+                }
+            });
+            const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
+            playVideo(selectedVideo.file, episodeCallbacks);
+        },
+        selectHighest: () => {
+            new PlayingInterface(Terminal.terminal, {
+                getCurrentTitle: () => {
+                    return selectedTitle;
+                },
+                getCurrentEpisode: () => {
+                    return selectedEpisode;
+                },
+                getEpisodes: () => {
+                    return availableEpisodes;
+                }
+            });
+            const selectedVideo = availableVideos.byHighResolution();
+            playVideo(selectedVideo.file, episodeCallbacks);
+        },
+        selectLowest: () => {
+            new PlayingInterface(Terminal.terminal, {
+                getCurrentTitle: () => {
+                    return selectedTitle;
+                },
+                getCurrentEpisode: () => {
+                    return selectedEpisode;
+                },
+                getEpisodes: () => {
+                    return availableEpisodes;
+                }
+            });
+            const selectedVideo = availableVideos.byLowResolution();
+            playVideo(selectedVideo.file, episodeCallbacks, index);
+        },
+        getAvailableResolutions: () => {
+            return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
+        }
+    });
+}
+
+const episodesCache = {};
+
+async function showTitleUI(selectedTitle, episodeOverride) {
+    const availableEpisodes = episodesCache[selectedTitle.id] ?? await selectedTitle.getEpisodes();
+    episodesCache[selectedTitle.id] = availableEpisodes;
+    if (episodeOverride) {
+        const selectedEpisode = availableEpisodes.find(e => e.episode == episodeOverride);
+        showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
+            next: () => {
+                showTitleUI(selectedTitle, episodeOverride + 1);
+            },
+            previous: () => {
+                showTitleUI(selectedTitle, episodeOverride - 1);
+            },
+            repeat: () => {
+                showTitleUI(selectedTitle, episodeOverride);
+            }
+        });
+        return;
+    }
+    new SelectEpisodeInterface(Terminal.terminal, {
+        selectEpisode: async (index) => {
+            const selectedEpisode = availableEpisodes[index];
+            history.add(selectedEpisode);
+            showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
+                next: () => {
+                    showTitleUI(selectedTitle, selectedEpisode.episode + 1);
+                },
+                previous: () => {
+                    showTitleUI(selectedTitle, selectedEpisode.episode - 1);
+                },
+                repeat: () => {
+                    showTitleUI(selectedTitle, selectedEpisode.episode);
+                }
+            });
+        },
+        getAvailableEpisodes: () => {
+            return availableEpisodes.map(episode => episode.episode);
+        }
+    });
+}
+
 Terminal.terminal.on('key', (key) => {
     if (key === 'CTRL_C') {
         Terminal.terminal.clear();
@@ -51,76 +153,43 @@ Terminal.terminal.on('key', (key) => {
     }
 });
 
-new SearchAnimeInterface(Terminal.terminal, {
-    searchAnime: async (query) => {
-        const titles = await anime.searchTitle(query);
-        const selectAnimeInterface = new SelectAnimeInterface(Terminal.terminal, {
-            selectAnime: async (index) => {
-                const selectedTitle = titles[index];
-                const availableEpisodes = await selectedTitle.getEpisodes();
-                const selectEpisodeInterface = new SelectEpisodeInterface(Terminal.terminal, {
-                    selectEpisode: async (index) => {
-                        const selectedEpisode = availableEpisodes[index];
-                        const availableVideos = (await selectedEpisode.getAvailableVideos()).filterByVideoType('mp4');
-                        new SelectResolutionInterface(Terminal.terminal, {
-                            selectResolution: (resolution) => {
-                                new PlayingInterface(Terminal.terminal, {
-                                    getCurrentTitle: () => {
-                                        return selectedTitle;
-                                    },
-                                    getCurrentEpisode: () => {
-                                        return selectedEpisode;
-                                    },
-                                    getEpisodes: () => {
-                                        return availableEpisodes;
-                                    }
-                                });
-                                const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
-                                playVideo(selectedVideo.file, selectEpisodeInterface, index);
-                            },
-                            selectHighest: () => {
-                                new PlayingInterface(Terminal.terminal, {
-                                    getCurrentTitle: () => {
-                                        return selectedTitle;
-                                    },
-                                    getCurrentEpisode: () => {
-                                        return selectedEpisode;
-                                    },
-                                    getEpisodes: () => {
-                                        return availableEpisodes;
-                                    }
-                                });
-                                const selectedVideo = availableVideos.byHighResolution();
-                                playVideo(selectedVideo.file, selectEpisodeInterface, index);
-                            },
-                            selectLowest: () => {
-                                new PlayingInterface(Terminal.terminal, {
-                                    getCurrentTitle: () => {
-                                        return selectedTitle;
-                                    },
-                                    getCurrentEpisode: () => {
-                                        return selectedEpisode;
-                                    },
-                                    getEpisodes: () => {
-                                        return availableEpisodes;
-                                    }
-                                });
-                                const selectedVideo = availableVideos.byLowResolution();
-                                playVideo(selectedVideo.file, selectEpisodeInterface, index);
-                            },
-                            getAvailableResolutions: () => {
-                                return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
-                            }
-                        });
+const defaultInterface = new DefaultInterface(Terminal.terminal, {
+    searchAnime: () => {
+        new SearchAnimeInterface(Terminal.terminal, {
+            searchAnime: async (query) => {
+                const titles = await anime.searchTitle(query);
+                new SelectAnimeInterface(Terminal.terminal, {
+                    selectAnime: async (index) => {
+                        const selectedTitle = titles[index];
+                        showTitleUI(selectedTitle);
                     },
-                    getAvailableEpisodes: () => {
-                        return availableEpisodes.map(episode => episode.episode);
+                    getAnimeNames: () => {
+                        return titles.map(title => title.title);
                     }
                 });
             },
-            getAnimeNames: () => {
-                return titles.map(title => title.title);
+            back: () => {
+                defaultInterface.reInitialize();
+            }
+        });
+    },
+    viewHistory: () => {
+        new HistoryInterface(Terminal.terminal, {
+            playAnime: (data) => {
+                showTitleUI(AnimeTitle.byId(data.id), data.episode);
+            },
+            back: () => {
+                defaultInterface.reInitialize();
+            },
+            getAnimes: () => {
+                return history.getAll();
             }
         });
     }
 });
+
+function cleanUp() {
+    history.dispose();
+}
+
+process.on('exit', cleanUp.bind(null));
