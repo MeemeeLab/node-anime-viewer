@@ -82,6 +82,14 @@ export class SearchAnimeInterface extends Interface {
 
 export class SelectAnimeInterface extends Interface {
     Init() {
+        if (this.cb.getAnimeNames.call(this).length === 0) {
+            this.term.red('No anime found\n');
+            this.term.white('Press any key to continue...\n');
+            this.term.once('key', () => {
+                this.cb.back.call(this);
+            });
+            return;
+        }
         this.term.white('Select anime: \n');
         this.term.singleColumnMenu(this.cb.getAnimeNames.call(this), (err, input) => {
             if (err) throw err;
@@ -93,8 +101,12 @@ export class SelectAnimeInterface extends Interface {
 export class SelectEpisodeInterface extends Interface {
     Init() {
         this.term.white('Select episode: \n');
-        this.term.gridMenu(this.cb.getAvailableEpisodes.call(this), (err, input) => {
+        this.term.gridMenu(this.cb.getAvailableEpisodes.call(this).concat(['Cancel']), (err, input) => {
             if (err) throw err;
+            if (input.selectedIndex === this.cb.getAvailableEpisodes.call(this).length) {
+                this.cb.back.call(this);
+                return;
+            }
             this.cb.selectEpisode.call(this, input.selectedIndex);
         })
     }

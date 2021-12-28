@@ -19,6 +19,7 @@ function getStartCommandLineForCurrentOS(filePath) {
     }
 }
 
+let vlcInstalled = null;
 
 function checkVLCInstalled() {
     return new Promise((resolve) => {

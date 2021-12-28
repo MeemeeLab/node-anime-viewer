@@ -224,6 +224,10 @@ export async function searchTitle(query) {
             'User-Agent': USERAGENT
         }
     });
+    // Don't worry, 'keywork' is not a OUR typo, It gogoanime's typo.
+    if ($('.last_episodes').find('.items').text().match(/Sorry, Not found Anime with keywork '.*'./)) {
+        return [];
+    }
     const titles = [];
     $('.last_episodes').find('.items').children().each((i, el) => {
         const title = new AnimeTitle();

@@ -105,39 +105,58 @@ async function showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, epi
 
 const episodesCache = {};
 
-async function showTitleUI(selectedTitle, episodeOverride) {
+async function showTitleUI(selectedTitle, defaultInterface, episodeOverride) {
     const availableEpisodes = episodesCache[selectedTitle.id] ?? await selectedTitle.getEpisodes();
     episodesCache[selectedTitle.id] = availableEpisodes;
     if (episodeOverride) {
         const selectedEpisode = availableEpisodes.find(e => e.episode == episodeOverride);
         showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
             next: () => {
-                showTitleUI(selectedTitle, episodeOverride + 1);
+                showTitleUI(selectedTitle, defaultInterface, episodeOverride + 1);
             },
             previous: () => {
-                showTitleUI(selectedTitle, episodeOverride - 1);
+                showTitleUI(selectedTitle, defaultInterface, episodeOverride - 1);
             },
             repeat: () => {
-                showTitleUI(selectedTitle, episodeOverride);
+                showTitleUI(selectedTitle, defaultInterface, episodeOverride);
             }
         });
         return;
     }
-    new SelectEpisodeInterface(Terminal.terminal, {
+    const selectEpisodeInterface = new SelectEpisodeInterface(Terminal.terminal, {
         selectEpisode: async (index) => {
             const selectedEpisode = availableEpisodes[index];
             history.add(selectedEpisode);
             showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
                 next: () => {
-                    showTitleUI(selectedTitle, selectedEpisode.episode + 1);
+                    if (selectedEpisode.episode >= availableEpisodes.length) {
+                        Terminal.terminal.white('\n\n').red('Episode ' + selectedEpisode.episode + 1 + ' is not available.\n');
+                        Terminal.terminal.white('Press any key to continue...');
+                        Terminal.terminal.once('key', () => {
+                            selectEpisodeInterface.reInitialize();
+                        });
+                        return;
+                    }
+                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode + 1);
                 },
                 previous: () => {
-                    showTitleUI(selectedTitle, selectedEpisode.episode - 1);
+                    if (selectedEpisode.episode <= 1) {
+                        Terminal.terminal.white('\n\n').red('Episode ' + selectedEpisode.episode - 1 + ' is not available.\n');
+                        Terminal.terminal.white('Press any key to continue...');
+                        Terminal.terminal.once('key', () => {
+                            selectEpisodeInterface.reInitialize();
+                        });
+                        return;
+                    }
+                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode - 1);
                 },
                 repeat: () => {
-                    showTitleUI(selectedTitle, selectedEpisode.episode);
+                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode);
                 }
             });
+        },
+        back: () => {
+            defaultInterface.reInitialize();
         },
         getAvailableEpisodes: () => {
             return availableEpisodes.map(episode => episode.episode);
@@ -161,7 +180,10 @@ const defaultInterface = new DefaultInterface(Terminal.terminal, {
                 new SelectAnimeInterface(Terminal.terminal, {
                     selectAnime: async (index) => {
                         const selectedTitle = titles[index];
-                        showTitleUI(selectedTitle);
+                        showTitleUI(selectedTitle, defaultInterface);
+                    },
+                    back: () => {
+                        defaultInterface.reInitialize();
                     },
                     getAnimeNames: () => {
                         return titles.map(title => title.title);
@@ -176,7 +198,7 @@ const defaultInterface = new DefaultInterface(Terminal.terminal, {
     viewHistory: () => {
         new HistoryInterface(Terminal.terminal, {
             playAnime: (data) => {
-                showTitleUI(AnimeTitle.byId(data.id), data.episode);
+                showTitleUI(AnimeTitle.byId(data.id), defaultInterface, data.episode);
             },
             back: () => {
                 defaultInterface.reInitialize();
