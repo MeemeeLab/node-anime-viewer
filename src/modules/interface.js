@@ -100,13 +100,37 @@ export class SelectAnimeInterface extends Interface {
 export class SelectEpisodeInterface extends Interface {
     initialize() {
         this.term.white('Select episode: \n');
-        this.term.gridMenu(this.cb.getAvailableEpisodes.call(this).concat(['Cancel']), (err, input) => {
+        this.term.gridMenu(['Type episode number'].concat(this.cb.getAvailableEpisodes.call(this).concat(['Cancel'])), (err, input) => {
             if (err) throw err;
-            if (input.selectedIndex === this.cb.getAvailableEpisodes.call(this).length) {
+            if (input.selectedIndex === this.cb.getAvailableEpisodes.call(this).length+1) {
                 this.cb.back.call(this);
                 return;
+            } else if (input.selectedIndex === 0) {
+                this.term.white('\nType episode number: ');
+                this.term.inputField((err, strInput) => {
+                    if (err) throw err;
+                    this.term.deleteLine();
+                    const input = parseInt(strInput);
+                    if (isNaN(input)) {
+                        this.term.red('Invalid input\n');
+                        this.term.white('Press any key to continue...\n');
+                        this.term.once('key', () => {
+                            this.reInitialize();
+                        });
+                        return;
+                    } else if (input < 1 || input > this.cb.getAvailableEpisodes.call(this).length) {
+                        this.term.red('Out of range\n');
+                        this.term.white('Press any key to continue...\n');
+                        this.term.once('key', () => {
+                            this.reInitialize();
+                        });
+                        return;
+                    }
+                    this.cb.selectEpisode.call(this, input - 1);
+                });
+                return;
             }
-            this.cb.selectEpisode.call(this, input.selectedIndex);
+            this.cb.selectEpisode.call(this, input.selectedIndex-1);
         })
     }
 }
