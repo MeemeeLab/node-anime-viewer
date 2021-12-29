@@ -186,9 +186,14 @@ export class AnimeTitle {
                 'User-Agent': USERAGENT
             }
         });
-        const epInfo = $('.active');
-        const epStart = parseInt(epInfo.attr('ep_start')) + 1;
-        const epEnd = parseInt(epInfo.attr('ep_end'));
+        // const epInfo = $('.active');
+        // const epStart = parseInt(epInfo.attr('ep_start')) + 1;
+        // const epEnd = parseInt(epInfo.attr('ep_end'));
+
+        // This should fix #21
+        const episodePages = $('#episode_page').find('li');
+        const epStart = parseInt(episodePages.first().find('a').attr('ep_start'));
+        const epEnd = parseInt(episodePages.last().find('a').attr('ep_end'));
 
         const episodes = [];
 
