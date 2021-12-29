@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { historyFilePath } from "../config.js";
+import { historyFileDir, historyFilePath, historyFilePathOld } from "../config.js";
 import { AnimeEpisode } from './anime.js';
 
 export class HistoryManager {
@@ -11,13 +11,24 @@ export class HistoryManager {
     _history;
 
     constructor() {
+        if (!fs.existsSync(historyFileDir)) {
+            fs.mkdirSync(historyFileDir);
+        }
+        
         if (fs.existsSync(historyFilePath)) {
             this._history = JSON.parse(fs.readFileSync(historyFilePath));
         } else {
-            this._history = {
-                version: 1,
-                data: {}
-            };
+            // If the file doesn't exist
+            if (fs.existsSync(historyFilePathOld)) {
+                // History file is old, move it to new location
+                fs.renameSync(historyFilePathOld, historyFilePath);
+                this._history = JSON.parse(fs.readFileSync(historyFilePath));
+            } else {
+                this._history = {
+                    version: 1,
+                    data: {}
+                };
+            }
         }
     }
 
