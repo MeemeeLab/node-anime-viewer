@@ -57,7 +57,6 @@ function showSelectEpisodeInterface(interfaces, options) {
         const selectEpisodeInterface = new SelectEpisodeInterface(Terminal.terminal, {
             selectEpisode: async (index) => {
                 const selectedEpisode = availableEpisodes[index];
-                history.add(selectedEpisode);
                 showSelectResolutionInterface({...interfaces, selectEpisodeInterface}, {...options, selectedEpisode, availableEpisodes});
             },
             back: () => {
@@ -96,6 +95,8 @@ function showSelectResolutionInterface(interfaces, options) {
 }
 
 function playVideo(interfaces, options) {
+    history.add(options.selectedEpisode);
+
     const playingInterface = new PlayingInterface(Terminal.terminal, {
         getCurrentTitle: () => {
             return options.selectedTitle;
@@ -138,7 +139,7 @@ function showVLCExitInterface(interfaces, options) {
                 });
                 return;
             }
-            options.selectedEpisode = options.availableEpisodes[options.selectedEpisode.episode + 1];
+            options.selectedEpisode = options.availableEpisodes.find(episode => episode.episode == options.selectedEpisode.episode + 1);
             showSelectResolutionInterface(interfaces, options);
         },
         repeatEpisode: () => {
@@ -153,7 +154,7 @@ function showVLCExitInterface(interfaces, options) {
                 });
                 return;
             }
-            options.selectedEpisode = options.availableEpisodes[options.selectedEpisode.episode - 1];
+            options.selectedEpisode = options.availableEpisodes.find(episode => episode.episode == options.selectedEpisode.episode - 1);
             showSelectResolutionInterface(interfaces, options);
         },
         back: () => {
