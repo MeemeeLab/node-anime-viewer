@@ -12,6 +12,12 @@ This project is very active and updated regularly. Don't forget to update regula
 3. Now, you can use command `node-anime-viewer`!
 4. To update, Run `npm install -g node-anime-viewer` again
 
+## VLC (Optional)
+
+You can download VLC from the [official VLC download site](https://www.videolan.org/vlc/#download). 
+
 # Screenshots
 
-![1](https://i.imgur.com/MuIJwQp.png)
+![1](https://i.imgur.com/xxy7Kdu.png)
+
+![ ](https://i.imgur.com/aSMa5ul.gif)
