@@ -10,9 +10,9 @@ export const packageConfig = JSON.parse(readFileSync(
   resolve(__dirname, "../../package.json"),
 ));
 
-export const histroyFilePath = resolve(__dirname, "../../history.json");
+export const historyFilePath = resolve(__dirname, "../../history.json");
 
 export default {
   packageConfig: packageConfig,
-  histroyFilePath: histroyFilePath
+  historyFilePath: historyFilePath
 }
