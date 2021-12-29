@@ -12,9 +12,9 @@ export class HistoryManager {
 
     constructor() {
         if (!fs.existsSync(historyFileDir)) {
-            fs.mkdirSync(historyFileDir);
+            fs.mkdirSync(historyFileDir, { recursive: true });
         }
-        
+
         if (fs.existsSync(historyFilePath)) {
             this._history = JSON.parse(fs.readFileSync(historyFilePath));
         } else {
