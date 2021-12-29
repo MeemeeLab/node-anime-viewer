@@ -14,30 +14,110 @@ import {
 } from './modules/interface.js';
 import history from './modules/history.js';
 
-function playVideo(url, episodeCallbacks) {
-    function onExit() {
-        new VLCExitInterface(Terminal.terminal, {
-            playNextEpisode: () => {
-                episodeCallbacks.next();
+Terminal.terminal.on('key', (key) => {
+    if (key === 'CTRL_C') {
+        Terminal.terminal.clear();
+        Terminal.terminal.red('Exiting with exit code 1...\n');
+        process.exit(1);
+    }
+});
+
+function showSearchAnimeInterface(interfaces) {
+    const searchAnimeInterface = new SearchAnimeInterface(Terminal.terminal, {
+        searchAnime: async (query) => {
+            const titles = await anime.searchTitle(query);
+            showSelectAnimeInterface({...interfaces, searchAnimeInterface}, {titles});
+        },
+        back: () => {
+            interfaces.defaultInterface.reInitialize();
+        }
+    });
+    searchAnimeInterface.initialize();
+}
+
+function showSelectAnimeInterface(interfaces, options) {
+    const selectAnimeInterface = new SelectAnimeInterface(Terminal.terminal, {
+        selectAnime: async (index) => {
+            const selectedTitle = options.titles[index];
+            showSelectEpisodeInterface({...interfaces, selectAnimeInterface}, {...options, selectedTitle});
+        },
+        back: () => {
+            interfaces.searchAnimeInterface.reInitialize();
+        },
+        getAnimeNames: () => {
+            return options.titles.map(title => title.title);
+        }
+    });
+    selectAnimeInterface.initialize();
+}
+
+function showSelectEpisodeInterface(interfaces, options) {
+    (async () => {
+        const availableEpisodes = await options.selectedTitle.getEpisodes();
+        const selectEpisodeInterface = new SelectEpisodeInterface(Terminal.terminal, {
+            selectEpisode: async (index) => {
+                const selectedEpisode = availableEpisodes[index];
+                history.add(selectedEpisode);
+                showSelectResolutionInterface({...interfaces, selectEpisodeInterface}, {...options, selectedEpisode, availableEpisodes});
             },
-            repeatEpisode: () => {
-                episodeCallbacks.repeat();
+            back: () => {
+                interfaces.selectAnimeInterface.reInitialize();
             },
-            playPreviousEpisode: () => {
-                episodeCallbacks.previous();
-            },
-            exit: () => {
-                history.dispose();
-                Terminal.terminal.clear();
-                process.exit();
+            getAvailableEpisodes: () => {
+                return availableEpisodes.map(episode => episode.episode);
             }
         });
+        selectEpisodeInterface.initialize();
+    })();
+}
+
+function showSelectResolutionInterface(interfaces, options) {
+    (async () => {
+        const availableVideos = (await options.selectedEpisode.getAvailableVideos()).filterByVideoType('mp4');
+        const selectResolutionInterface = new SelectResolutionInterface(Terminal.terminal, {
+            selectResolution: (resolution) => {
+                const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
+                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+            },
+            selectHighest: () => {
+                const selectedVideo = availableVideos.byHighResolution();
+                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+            },
+            selectLowest: () => {
+                const selectedVideo = availableVideos.byLowResolution();
+                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+            },
+            getAvailableResolutions: () => {
+                return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
+            }
+        });
+        selectResolutionInterface.initialize();
+    })();
+}
+
+function playVideo(interfaces, options) {
+    const playingInterface = new PlayingInterface(Terminal.terminal, {
+        getCurrentTitle: () => {
+            return options.selectedTitle;
+        },
+        getCurrentEpisode: () => {
+            return options.selectedEpisode;
+        },
+        getEpisodes: () => {
+            return options.availableEpisodes;
+        }
+    });
+    playingInterface.initialize();
+
+    function onExit() {
+        showVLCExitInterface({...interfaces, playingInterface}, options);
     }
-    processUtil.openVLC(url)
+
+    processUtil.openVLC(options.fileURL)
         .then(onExit)
         .catch(() => {
             // VLC is not installed
-            processUtil.openDefaultApplication(url)
+            processUtil.openDefaultApplication(options.fileURL)
                 .then(onExit)
                 .catch(() => {
                     Terminal.terminal.clear();
@@ -47,168 +127,86 @@ function playVideo(url, episodeCallbacks) {
         });
 }
 
-async function showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, episodeCallbacks) { 
-    // TODO: Show go back button on the VLCExitInterface and not quit
-    history.add(selectedEpisode);
-    const availableVideos = (await selectedEpisode.getAvailableVideos()).filterByVideoType('mp4');
-    new SelectResolutionInterface(Terminal.terminal, {
-        selectResolution: (resolution) => {
-            new PlayingInterface(Terminal.terminal, {
-                getCurrentTitle: () => {
-                    return selectedTitle;
-                },
-                getCurrentEpisode: () => {
-                    return selectedEpisode;
-                },
-                getEpisodes: () => {
-                    return availableEpisodes;
-                }
-            });
-            const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
-            playVideo(selectedVideo.file, episodeCallbacks);
-        },
-        selectHighest: () => {
-            new PlayingInterface(Terminal.terminal, {
-                getCurrentTitle: () => {
-                    return selectedTitle;
-                },
-                getCurrentEpisode: () => {
-                    return selectedEpisode;
-                },
-                getEpisodes: () => {
-                    return availableEpisodes;
-                }
-            });
-            const selectedVideo = availableVideos.byHighResolution();
-            playVideo(selectedVideo.file, episodeCallbacks);
-        },
-        selectLowest: () => {
-            new PlayingInterface(Terminal.terminal, {
-                getCurrentTitle: () => {
-                    return selectedTitle;
-                },
-                getCurrentEpisode: () => {
-                    return selectedEpisode;
-                },
-                getEpisodes: () => {
-                    return availableEpisodes;
-                }
-            });
-            const selectedVideo = availableVideos.byLowResolution();
-            playVideo(selectedVideo.file, episodeCallbacks, index);
-        },
-        getAvailableResolutions: () => {
-            return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
-        }
-    });
-}
-
-const episodesCache = {};
-
-async function showTitleUI(selectedTitle, defaultInterface, episodeOverride) {
-    const availableEpisodes = episodesCache[selectedTitle.id] ?? await selectedTitle.getEpisodes();
-    episodesCache[selectedTitle.id] = availableEpisodes;
-    if (episodeOverride) {
-        const selectedEpisode = availableEpisodes.find(e => e.episode == episodeOverride);
-        showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
-            next: () => {
-                showTitleUI(selectedTitle, defaultInterface, episodeOverride + 1);
-            },
-            previous: () => {
-                showTitleUI(selectedTitle, defaultInterface, episodeOverride - 1);
-            },
-            repeat: () => {
-                showTitleUI(selectedTitle, defaultInterface, episodeOverride);
+function showVLCExitInterface(interfaces, options) {        
+    const vlcExitInterface = new VLCExitInterface(Terminal.terminal, {
+        playNextEpisode: () => {
+            if (options.selectedEpisode.episode >= options.availableEpisodes.length) {
+                Terminal.terminal.white('\n\n').red('Episode ' + options.selectedEpisode.episode + 1 + ' is not available.\n');
+                Terminal.terminal.white('Press any key to continue...');
+                Terminal.terminal.once('key', () => {
+                    interfaces.selectEpisodeInterface.reInitialize();
+                });
+                return;
             }
-        });
-        return;
-    }
-    const selectEpisodeInterface = new SelectEpisodeInterface(Terminal.terminal, {
-        selectEpisode: async (index) => {
-            const selectedEpisode = availableEpisodes[index];
-            history.add(selectedEpisode);
-            showPlayUI(selectedTitle, availableEpisodes, selectedEpisode, {
-                next: () => {
-                    if (selectedEpisode.episode >= availableEpisodes.length) {
-                        Terminal.terminal.white('\n\n').red('Episode ' + selectedEpisode.episode + 1 + ' is not available.\n');
-                        Terminal.terminal.white('Press any key to continue...');
-                        Terminal.terminal.once('key', () => {
-                            selectEpisodeInterface.reInitialize();
-                        });
-                        return;
-                    }
-                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode + 1);
-                },
-                previous: () => {
-                    if (selectedEpisode.episode <= 1) {
-                        Terminal.terminal.white('\n\n').red('Episode ' + selectedEpisode.episode - 1 + ' is not available.\n');
-                        Terminal.terminal.white('Press any key to continue...');
-                        Terminal.terminal.once('key', () => {
-                            selectEpisodeInterface.reInitialize();
-                        });
-                        return;
-                    }
-                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode - 1);
-                },
-                repeat: () => {
-                    showTitleUI(selectedTitle, defaultInterface, selectedEpisode.episode);
-                }
-            });
+            options.selectedEpisode = options.availableEpisodes[options.selectedEpisode.episode + 1];
+            showSelectResolutionInterface(interfaces, options);
+        },
+        repeatEpisode: () => {
+            showSelectResolutionInterface(interfaces, options);
+        },
+        playPreviousEpisode: () => {
+            if (options.selectedEpisode.episode <= 1) {
+                Terminal.terminal.white('\n\n').red('Episode ' + options.selectedEpisode.episode - 1 + ' is not available.\n');
+                Terminal.terminal.white('Press any key to continue...');
+                Terminal.terminal.once('key', () => {
+                    interfaces.selectEpisodeInterface.reInitialize();
+                });
+                return;
+            }
+            options.selectedEpisode = options.availableEpisodes[options.selectedEpisode.episode - 1];
+            showSelectResolutionInterface(interfaces, options);
         },
         back: () => {
-            defaultInterface.reInitialize();
+            interfaces.selectEpisodeInterface.reInitialize();
         },
-        getAvailableEpisodes: () => {
-            return availableEpisodes.map(episode => episode.episode);
+        exit: () => {
+            history.dispose();
+            Terminal.terminal.clear();
+            process.exit();
         }
     });
+    vlcExitInterface.initialize();
 }
 
-Terminal.terminal.on('key', (key) => {
-    if (key === 'CTRL_C') {
-        Terminal.terminal.clear();
-        Terminal.terminal.red('Exiting with exit code 1...\n');
-        process.exit(1);
-    }
-});
+function showHistoryInterface(interfaces) {
+    const historyInterface = new HistoryInterface(Terminal.terminal, {
+        playAnime: async (data) => {
+            const title = AnimeTitle.byId(data.id);
+            title.title = data.title;
+            const availableEpisodes = await title.getEpisodes(); 
+            const interfaces = {
+                historyInterface,
+                searchAnimeInterface: historyInterface,
+                selectAnimeInterface: historyInterface,
+                selectEpisodeInterface: historyInterface, // Map all of them to history interface because we don't need to show them
+            }
+            const options = {
+                titles: [title],
+                selectedTitle: title,
+                availableEpisodes,
+                selectedEpisode: availableEpisodes.find(episode => episode.episode == data.episode),
+            }
+            showSelectResolutionInterface(interfaces, options);
+        },
+        back: () => {
+            interfaces.defaultInterface.reInitialize();
+        },
+        getAnimes: () => {
+            return history.getAll();
+        }
+    });
+    historyInterface.initialize();
+}
 
 const defaultInterface = new DefaultInterface(Terminal.terminal, {
     searchAnime: () => {
-        new SearchAnimeInterface(Terminal.terminal, {
-            searchAnime: async (query) => {
-                const titles = await anime.searchTitle(query);
-                new SelectAnimeInterface(Terminal.terminal, {
-                    selectAnime: async (index) => {
-                        const selectedTitle = titles[index];
-                        showTitleUI(selectedTitle, defaultInterface);
-                    },
-                    back: () => {
-                        defaultInterface.reInitialize();
-                    },
-                    getAnimeNames: () => {
-                        return titles.map(title => title.title);
-                    }
-                });
-            },
-            back: () => {
-                defaultInterface.reInitialize();
-            }
-        });
+        showSearchAnimeInterface({defaultInterface});
     },
     viewHistory: () => {
-        new HistoryInterface(Terminal.terminal, {
-            playAnime: (data) => {
-                showTitleUI(AnimeTitle.byId(data.id), defaultInterface, data.episode);
-            },
-            back: () => {
-                defaultInterface.reInitialize();
-            },
-            getAnimes: () => {
-                return history.getAll();
-            }
-        });
+        showHistoryInterface({defaultInterface});
     }
 });
+defaultInterface.initialize();
 
 function cleanUp() {
     history.dispose();

@@ -192,7 +192,7 @@ export class AnimeTitle {
 
         // This should fix #21
         const episodePages = $('#episode_page').find('li');
-        const epStart = parseInt(episodePages.first().find('a').attr('ep_start'));
+        const epStart = parseInt(episodePages.first().find('a').attr('ep_start')) + 1;
         const epEnd = parseInt(episodePages.last().find('a').attr('ep_end'));
 
         const episodes = [];
