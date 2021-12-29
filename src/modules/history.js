@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { histroyFilePath } from "../config.js";
+import { historyFilePath } from "../config.js";
 import { AnimeEpisode } from './anime.js';
 
 export class HistoryManager {
@@ -11,8 +11,8 @@ export class HistoryManager {
     _history;
 
     constructor() {
-        if (fs.existsSync(histroyFilePath)) {
-            this._history = JSON.parse(fs.readFileSync(histroyFilePath));
+        if (fs.existsSync(historyFilePath)) {
+            this._history = JSON.parse(fs.readFileSync(historyFilePath));
         } else {
             this._history = {
                 version: 1,
@@ -25,7 +25,7 @@ export class HistoryManager {
      * Save history to file
      */
     save() {
-        fs.writeFileSync(histroyFilePath, JSON.stringify(this._history));
+        fs.writeFileSync(historyFilePath, JSON.stringify(this._history));
     }
 
     /**
