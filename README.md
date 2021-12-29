@@ -22,4 +22,4 @@ You can download VLC from the [official VLC download site](https://www.videolan.
 
 ---
 
-![2](https://i.imgur.com/NKCMxEX.mp4)
+![](https://i.imgur.com/NKCMxEX.gif)
