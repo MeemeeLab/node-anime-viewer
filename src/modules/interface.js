@@ -1,6 +1,10 @@
 import Terminal from "terminal-kit";
 
 import { packageConfig } from '../config.js';
+import { getGist, getPackageVersionNpm } from "./package.js";
+
+const msg = await getPackageVersionNpm('node-anime-viewer') > parseInt(packageConfig.version.replaceAll('.', '')) ? 'New version is available for download. Please update using `npm i -g node-anime-viewer` for better experience and bug fixes.\n' : '' +
+    await getGist('dff5ecbd6f74857fd1d987399123a35c');
 
 export default class Interface {
     term;
@@ -15,7 +19,9 @@ export default class Interface {
         this.term.clear();
         this.term.white(packageConfig.name + ' ').green(packageConfig.version + '\n');
         this.term.white('Copyright (C) 2021 ').blue(packageConfig.author).white(' and ').yellow('Contributors\n');
-        this.term.white('\n\n');
+        this.term.white('\n');
+        this.term.yellow(msg);
+        this.term.white('\n');
     }
     initialize() {}
     reInitialize() {
