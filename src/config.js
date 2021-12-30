@@ -26,12 +26,14 @@ export const packageConfig = JSON.parse(readFileSync(
 ));
 
 export const historyFilePathOld = resolve(__dirname, "../../history.json");
-export const historyFileDir = resolve(getApplicationDataPathForOS(), packageConfig.name);
-export const historyFilePath = resolve(historyFileDir, "history.json");
+export const saveFolder = resolve(getApplicationDataPathForOS(), packageConfig.name);
+export const historyFilePath = resolve(saveFolder, "history.json");
+export const configFilePath = resolve(saveFolder, "config.json");
 
 export default {
   packageConfig: packageConfig,
   historyFilePathOld: historyFilePathOld,
-  historyFileDir: historyFileDir,
-  historyFilePath: historyFilePath
+  saveFolder: saveFolder,
+  historyFilePath: historyFilePath,
+  configFilePath: configFilePath,
 }

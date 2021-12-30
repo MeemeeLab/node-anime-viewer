@@ -5,6 +5,7 @@ import Terminal from 'terminal-kit';
 import {
     DefaultInterface,
     HistoryInterface,
+    EditConfigInterface,
     SearchAnimeInterface,
     SelectAnimeInterface,
     SelectEpisodeInterface,
@@ -13,6 +14,7 @@ import {
     VLCExitInterface
 } from './modules/interface.js';
 import history from './modules/history.js';
+import config from './modules/config.js';
 
 Terminal.terminal.on('key', (key) => {
     if (key === 'CTRL_C') {
@@ -21,6 +23,19 @@ Terminal.terminal.on('key', (key) => {
         process.exit(1);
     }
 });
+
+// Set default value for config if not exists
+if (!config.get('initialized')) {
+    config.set('initialized', true);
+
+    // processUtil.launcher
+    if (processUtil.getStartCommandLineForCurrentOS('vlc') !== undefined) {
+        config.set('processUtil.launcher', 'vlc');
+    } else {
+        // android
+        config.set('processUtil.launcher', null);
+    }
+}
 
 function showSearchAnimeInterface(interfaces) {
     const searchAnimeInterface = new SearchAnimeInterface(Terminal.terminal, {
@@ -114,7 +129,7 @@ function playVideo(interfaces, options) {
         showVLCExitInterface({...interfaces, playingInterface}, options);
     }
 
-    processUtil.openVLC(options.fileURL)
+    processUtil.openURL(config.get('processUtil.launcher'), options.fileURL)
         .then(onExit)
         .catch(() => {
             // VLC is not installed
@@ -199,18 +214,38 @@ function showHistoryInterface(interfaces) {
     historyInterface.initialize();
 }
 
+function showEditConfigInterface(interfaces) {
+    const editConfigInterface = new EditConfigInterface(Terminal.terminal, {
+        setConfig: (key, data) => {
+            config.set(key, data);
+        },
+        getConfig: (key) => {
+            return config.get(key);
+        },
+        back: () => {
+            Terminal.terminal.clear();
+            interfaces.defaultInterface.reInitialize();
+        }
+    });
+    editConfigInterface.initialize();
+}
+
 const defaultInterface = new DefaultInterface(Terminal.terminal, {
     searchAnime: () => {
         showSearchAnimeInterface({defaultInterface});
     },
     viewHistory: () => {
         showHistoryInterface({defaultInterface});
+    },
+    editConfig: () => {
+        showEditConfigInterface({defaultInterface});
     }
 });
 defaultInterface.initialize();
 
 function cleanUp() {
     history.dispose();
+    config.dispose();
 }
 
 process.on('exit', cleanUp.bind(null));

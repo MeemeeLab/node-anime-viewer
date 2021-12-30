@@ -30,7 +30,7 @@ export default class Interface {
 export class DefaultInterface extends Interface {
     initialize() {
         this.term.white('What do you want to do next?\n');
-        this.term.singleColumnMenu(['Search anime and play', 'Select anime from history'], (err, input) => {
+        this.term.singleColumnMenu(['Search anime and play', 'Select anime from history', 'Edit configuration'], (err, input) => {
             if (err) throw err;
             switch (input.selectedIndex) {
                 case 0:
@@ -38,6 +38,9 @@ export class DefaultInterface extends Interface {
                     break;
                 case 1:
                     this.cb.viewHistory.call(this);
+                    break;
+                case 2:
+                    this.cb.editConfig.call(this);
                     break;
             }
         });
@@ -62,6 +65,61 @@ export class HistoryInterface extends Interface {
                 return; 
             }
             this.cb.playAnime(this.cb.getAnimes.call(this)[input.selectedIndex]);
+        });
+    }
+}
+
+export class EditConfigInterface extends Interface {
+    initialize() {
+        this.term.white('What do you want to edit?\n');
+        this.term.singleColumnMenu(['Player launcher', 'Back'], (err, input) => {
+            if (err) throw err;
+            switch (input.selectedIndex) {
+                case 0:
+                    if (this.cb.getConfig.call(this, 'processUtil.launcher') === null) {
+                        this.term.deleteLine();
+                        this.term.red('Not supported\n');
+                        this.term.white('Press any key to continue...');
+                        this.term.once('key', () => {
+                            this.reInitialize();
+                        });
+                        return;
+                    }
+                    new EditConfigEntryInterface(this.term, {
+                        getKName: () => 'processUtil.launcher',
+                        getValue: () => this.cb.getConfig.call(this, 'processUtil.launcher'),
+                        setValue: (value) => {
+                            this.cb.setConfig.call(this, 'processUtil.launcher', value)
+                            this.reInitialize();
+                        },
+                        validate: () => true
+                    }).initialize();
+                    break;
+                case 1:
+                    this.cb.back.call(this);
+                    break;
+            }
+        });
+    }
+}
+
+export class EditConfigEntryInterface extends Interface {
+    initialize() {
+        this.term.white('Editing: ' + this.cb.getKName.call(this) + '\n\n');
+        this.term.white('Enter new value: ').inputField({
+            default: this.cb.getValue.call(this)
+        }, (err, input) => {
+            if (err) throw err;
+            this.term.deleteLine();
+            if (!this.cb.validate(input)) {
+                this.term.red('Invalid value\n');
+                this.term.white('Press any key to continue...');
+                this.term.once('key', () => {
+                    this.reInitialize();
+                });
+                return;
+            }
+            this.cb.setValue.call(this, input);
         });
     }
 }

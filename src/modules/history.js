@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { historyFileDir, historyFilePath, historyFilePathOld } from "../config.js";
+import { saveFolder, historyFilePath, historyFilePathOld } from "../config.js";
 import { AnimeEpisode } from './anime.js';
 
 export class HistoryManager {
@@ -11,8 +11,8 @@ export class HistoryManager {
     _history;
 
     constructor() {
-        if (!fs.existsSync(historyFileDir)) {
-            fs.mkdirSync(historyFileDir, { recursive: true });
+        if (!fs.existsSync(saveFolder)) {
+            fs.mkdirSync(saveFolder, { recursive: true });
         }
 
         if (fs.existsSync(historyFilePath)) {
