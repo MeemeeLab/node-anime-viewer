@@ -236,7 +236,7 @@ function showVLCExitInterface(interfaces, options) {
     const vlcExitInterface = new VLCExitInterface(Terminal.terminal, {
         playNextEpisode: () => {
             if (options.selectedEpisode.episode >= options.availableEpisodes.length) {
-                Terminal.terminal.white('\n\n').red('Episode ' + options.selectedEpisode.episode + 1 + ' is not available.\n');
+                Terminal.terminal.white('\n\n').red('Episode ' + (parseInt(options.selectedEpisode.episode) + 1)  + ' is not available.\n');
                 Terminal.terminal.white('Press any key to continue...');
                 Terminal.terminal.once('key', () => {
                     interfaces.selectEpisodeInterface.reInitialize();
@@ -251,7 +251,7 @@ function showVLCExitInterface(interfaces, options) {
         },
         playPreviousEpisode: () => {
             if (options.selectedEpisode.episode <= 1) {
-                Terminal.terminal.white('\n\n').red('Episode ' + options.selectedEpisode.episode - 1 + ' is not available.\n');
+                Terminal.terminal.white('\n\n').red('Episode ' + (parseInt(options.selectedEpisode.episode) - 1) + ' is not available.\n');
                 Terminal.terminal.white('Press any key to continue...');
                 Terminal.terminal.once('key', () => {
                     interfaces.selectEpisodeInterface.reInitialize();
