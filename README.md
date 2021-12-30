@@ -1,6 +1,5 @@
 # node-anime-viewer
 Nodejs implementation of ani-cli.  
-Install VLC and PATH to VLC for better experience.
 
 This project is very active and updated regularly. Don't forget to update regularly!
 
@@ -8,13 +7,20 @@ This project is very active and updated regularly. Don't forget to update regula
 
 # Installation
 1. Install nodejs from official site
-2. Run `npm install -g node-anime-viewer` 
-3. Now, you can use command `node-anime-viewer`!
-4. To update, Run `npm install -g node-anime-viewer` again
+2. Run `npx node-anime-viewer`
 
 ## VLC (Optional)
 
 You can download VLC from the [official VLC download site](https://www.videolan.org/vlc/#download). 
+This program has support for custom video player, And it's compatible for VLC.
+
+# Features
+* [X] Search anime
+* [X] Play anime
+* [X] History
+* [X] Configuration
+* [X] Download episode
+* [X] Download all episodes
 
 # Screenshots
 
