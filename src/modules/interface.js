@@ -13,15 +13,17 @@ export default class Interface {
      * @param {Terminal.Terminal} term 
      * @param {Object} cb
      */
-    constructor(term, cb) {
+    constructor(term, cb, disableInitialization = false) {
         this.term = term;
         this.cb = cb;
-        this.term.clear();
-        this.term.white(packageConfig.name + ' ').green(packageConfig.version + '\n');
-        this.term.white('Copyright (C) 2021 ').blue(packageConfig.author).white(' and ').yellow('Contributors\n');
-        this.term.white('\n');
-        this.term.yellow(msg);
-        this.term.white('\n');
+        if (!disableInitialization) {
+            this.term.clear();
+            this.term.white(packageConfig.name + ' ').green(packageConfig.version + '\n');
+            this.term.white('Copyright (C) 2021 ').blue(packageConfig.author).white(' and ').yellow('Contributors\n');
+            this.term.white('\n');
+            this.term.yellow(msg);
+            this.term.white('\n');
+        }
     }
     initialize() {}
     reInitialize() {
@@ -164,9 +166,12 @@ export class SelectAnimeInterface extends Interface {
 export class SelectEpisodeInterface extends Interface {
     initialize() {
         this.term.white('Select episode: \n');
-        this.term.gridMenu(['Type episode number'].concat(this.cb.getAvailableEpisodes.call(this).concat(['Cancel'])), (err, input) => {
+        this.term.gridMenu(['Type episode number'].concat(this.cb.getAvailableEpisodes.call(this).concat(['Bulk download', 'Cancel'])), (err, input) => {
             if (err) throw err;
             if (input.selectedIndex === this.cb.getAvailableEpisodes.call(this).length+1) {
+                this.cb.bulkDownload.call(this);
+                return;
+            } else if (input.selectedIndex === this.cb.getAvailableEpisodes.call(this).length+2) {
                 this.cb.back.call(this);
                 return;
             } else if (input.selectedIndex === 0) {
@@ -190,7 +195,7 @@ export class SelectEpisodeInterface extends Interface {
                         });
                         return;
                     }
-                    this.cb.selectEpisode.call(this, input - 1);
+                    this.cb.selectEpisode.call(this, input - 2);
                 });
                 return;
             }
@@ -215,6 +220,45 @@ export class SelectResolutionInterface extends Interface {
                 this.cb.selectLowest.call(this);
             } else {
                 this.cb.selectResolution.call(this, resolutions[input.selectedIndex - 1]);
+            }
+        });
+    }
+}
+
+export class SelectActionInterface extends Interface {
+    initialize() {
+        this.term.white('What do you want to do?\n');
+        this.term.singleColumnMenu(['Play', 'Download'], (err, input) => {
+            if (err) throw err;
+            switch (input.selectedIndex) {
+                case 0:
+                    this.cb.play.call(this);
+                    break;
+                case 1:
+                    this.cb.download.call(this);
+                    break;
+            }
+        });
+    }
+}
+
+export class DownloadInterface extends Interface {
+    initialize(bulk = false) {
+        const progress = this.term.progressBar({
+            title: 'Downloading',
+            eta: true,
+            percent: true
+        })
+        this.cb.download.call(this, (percentage) => {
+            progress.update(percentage);
+        }, () => {
+            progress.stop();
+            this.term.white('\n').green(`Download complete: saved to ${this.cb.getFileName.call(this)}\n`);
+            if (!bulk) {
+                this.term.white('Press any key to continue...\n');
+                this.term.once('key', () => {
+                    this.cb.back.call(this);
+                });
             }
         });
     }

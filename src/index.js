@@ -1,7 +1,10 @@
 #!/usr/bin/env node
-import anime, {AnimeTitle} from './modules/anime.js';
 import processUtil from './modules/process.js';
+import path from 'path';
+import fs from 'fs';
+import anime, {AnimeTitle} from './modules/anime.js';
 import Terminal from 'terminal-kit';
+import fetch from 'node-fetch';
 import {
     DefaultInterface,
     HistoryInterface,
@@ -10,9 +13,12 @@ import {
     SelectAnimeInterface,
     SelectEpisodeInterface,
     SelectResolutionInterface,
+    SelectActionInterface,
+    DownloadInterface,
     PlayingInterface,
     VLCExitInterface
 } from './modules/interface.js';
+import { getDownloadFolderForCurrentOS } from './modules/path.js';
 import history from './modules/history.js';
 import config from './modules/config.js';
 
@@ -74,6 +80,9 @@ function showSelectEpisodeInterface(interfaces, options) {
                 const selectedEpisode = availableEpisodes[index];
                 showSelectResolutionInterface({...interfaces, selectEpisodeInterface}, {...options, selectedEpisode, availableEpisodes});
             },
+            bulkDownload: () => {
+                bulkDownload({...interfaces, selectEpisodeInterface}, {...options, availableEpisodes});
+            },
             back: () => {
                 interfaces.selectAnimeInterface.reInitialize();
             },
@@ -91,21 +100,101 @@ function showSelectResolutionInterface(interfaces, options) {
         const selectResolutionInterface = new SelectResolutionInterface(Terminal.terminal, {
             selectResolution: (resolution) => {
                 const selectedVideo = availableVideos.getVideos().find(v => v.resolution == resolution);
-                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+                showSelectActionInterface({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file, selectedVideo});
             },
             selectHighest: () => {
                 const selectedVideo = availableVideos.byHighResolution();
-                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+                showSelectActionInterface({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file, selectedVideo});
             },
             selectLowest: () => {
                 const selectedVideo = availableVideos.byLowResolution();
-                playVideo({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file});
+                showSelectActionInterface({...interfaces, selectResolutionInterface}, {...options, fileURL: selectedVideo.file, selectedVideo});
             },
             getAvailableResolutions: () => {
                 return availableVideos.getVideosHasResolution().map(video => video.resolution).sort((a, b) => b - a);
             }
         });
         selectResolutionInterface.initialize();
+    })();
+}
+
+function showSelectActionInterface(interfaces, options) {
+    const selectActionInterface = new SelectActionInterface(Terminal.terminal, {
+        play: () => {
+            playVideo({...interfaces, selectActionInterface}, options);
+        },
+        download: () => {
+            showDownloadInterface({...interfaces, selectActionInterface}, options);
+        }
+    });
+    selectActionInterface.initialize();
+}
+
+function showDownloadInterface(interfaces, options) {
+    const downloadPath = path.join(getDownloadFolderForCurrentOS(), options.selectedTitle.id + '-' + options.selectedEpisode.episode + '-' + options.selectedVideo.label.replaceAll(' ', '') + '.mp4');
+    const downloadInterface = new DownloadInterface(Terminal.terminal, {
+        download: (cb, complete) => {
+            fetch(options.fileURL)
+                .then(res => {
+                    const length = res.headers.get('content-length');
+                    let totalLengthReceived = 0;
+                    res.body.on('data', (chunk) => {
+                        totalLengthReceived += chunk.length;
+                        cb(totalLengthReceived / length);
+                    });
+                    res.body.on('close', () => complete());
+                    res.body.pipe(fs.createWriteStream(downloadPath));
+                });
+        },
+        getFileName: () => {
+            return downloadPath;
+        },
+        back: () => {
+            interfaces.selectEpisodeInterface.reInitialize();
+        }
+    });
+    downloadInterface.initialize();
+}
+
+function bulkDownload(interfaces, options) {
+    (async () => {
+        const downloadDir = path.join(getDownloadFolderForCurrentOS(), options.selectedTitle.id);
+        if (!fs.existsSync(downloadDir)) {
+            fs.mkdirSync(downloadDir);
+        }
+        for (const i in options.availableEpisodes) {
+            await new Promise(async (resolve) => {
+                const episode = options.availableEpisodes[i];
+                const downloadPath = path.join(downloadDir, episode.episode + '.mp4');
+                const url = (await episode.getAvailableVideos()).filterByVideoType('mp4').byHighResolution().file;
+                const downloadInterface = new DownloadInterface(Terminal.terminal, {
+                    download: (cb, complete) => {
+                        fetch(url)
+                            .then(res => {
+                                const length = res.headers.get('content-length');
+                                let totalLengthReceived = 0;
+                                res.body.on('data', (chunk) => {
+                                    totalLengthReceived += chunk.length;
+                                    cb(totalLengthReceived / length);
+                                });
+                                res.body.on('close', () => {
+                                    complete();
+                                    if (i != options.availableEpisodes.length - 1) resolve();
+                                });
+                                res.body.pipe(fs.createWriteStream(downloadPath));
+                            });
+                    },
+                    getFileName: () => {
+                        return downloadPath;
+                    },
+                    back: () => {
+                        resolve();
+                    }
+                }, i != 0);
+                downloadInterface.initialize(i != options.availableEpisodes.length - 1);
+            });
+        }
+        interfaces.defaultInterface.reInitialize();
     })();
 }
 
