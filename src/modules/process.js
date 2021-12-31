@@ -28,7 +28,7 @@ export function openURL(commandLine, url) {
             reject();
             return;
         }
-        child_process.spawn(commandLine, [url]).once('close', () => resolve()).once('error', () => reject());
+        child_process.spawn(commandLine, [url], { stdio: 'inherit' }).once('close', () => resolve()).once('error', () => reject());
     });
 }
 
