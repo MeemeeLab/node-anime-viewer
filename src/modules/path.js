@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { statSync } from 'fs';
+import { tmpdir } from 'os'
 
 export function getDownloadFolderForCurrentOS() {
     switch (process.platform) {
@@ -8,6 +9,8 @@ export function getDownloadFolderForCurrentOS() {
         case "win32":
         case "win64":
             return `${process.env.USERPROFILE}\\Downloads`;
+	case "android":
+            return `/storage/emulated/0/Download`;
         default:
             let dir;
             try {
@@ -22,7 +25,7 @@ export function getDownloadFolderForCurrentOS() {
             } catch (_) {}
             if (stat) return homeDownloads;
           
-            return '/tmp/';
+            return tmpdir();
     }
 }
 
