@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { statSync } from 'fs';
+import { tmpdir } from 'os'
 
 export function getDownloadFolderForCurrentOS() {
     switch (process.platform) {
@@ -22,7 +23,7 @@ export function getDownloadFolderForCurrentOS() {
             } catch (_) {}
             if (stat) return homeDownloads;
           
-            return '/tmp/';
+            return tmpdir();
     }
 }
 
