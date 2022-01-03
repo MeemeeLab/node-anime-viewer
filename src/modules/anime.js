@@ -157,7 +157,7 @@ export class AnimeEpisode {
         }).then(resp => resp.json());
         const videos = new AnimeVideoCollection([]);
         response.source.forEach(v => videos._rawVideos.push(new AnimeVideo(v)));
-        response.source_bk.forEach(v => videos._rawVideos.push(new AnimeVideo(v)));
+        //response.source_bk.forEach(v => videos._rawVideos.push(new AnimeVideo(v)));
         return videos;
     }
 }
