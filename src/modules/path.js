@@ -9,6 +9,8 @@ export function getDownloadFolderForCurrentOS() {
         case "win32":
         case "win64":
             return `${process.env.USERPROFILE}\\Downloads`;
+	case "android":
+            return `/storage/emulated/0/Download`;
         default:
             let dir;
             try {
