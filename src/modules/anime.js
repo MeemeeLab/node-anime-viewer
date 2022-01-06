@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import CryptoJS from 'crypto-js';
 import url from 'url';
 
-const BASEURL = "https://www2.gogoanime.cm";
+const BASEURL = "https://www3.gogoanime.cm";
 const USERAGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36";
 
 // HELPER FUNCTIONS
