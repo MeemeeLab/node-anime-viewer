@@ -19,10 +19,18 @@ export class ConfigManager {
         } else {
             // If the file doesn't exist
             this._config = {
-                version: 1,
+                version: 0,
                 data: {}
             };
         }
+    }
+
+    get version() {
+        return this._config.version;
+    }
+
+    set version(value) {
+        this._config.version = value;
     }
 
     /**

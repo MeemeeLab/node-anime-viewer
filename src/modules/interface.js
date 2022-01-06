@@ -80,7 +80,7 @@ export class HistoryInterface extends Interface {
 export class EditConfigInterface extends Interface {
     initialize() {
         this.term.white('What do you want to edit?\n');
-        this.term.singleColumnMenu(['Player launcher', 'Back'], (err, input) => {
+        this.term.singleColumnMenu(['Player launcher', 'Player launcher arguments', 'Back'], (err, input) => {
             if (err) throw err;
             switch (input.selectedIndex) {
                 case 0:
@@ -104,6 +104,26 @@ export class EditConfigInterface extends Interface {
                     }).initialize();
                     break;
                 case 1:
+                    if (this.cb.getConfig.call(this, 'processUtil.launcherArgs') === null) {
+                        this.term.deleteLine();
+                        this.term.red('Not supported\n');
+                        this.term.white('Press any key to continue...');
+                        this.term.once('key', () => {
+                            this.reInitialize();
+                        });
+                        return;
+                    }
+                    new EditConfigEntryInterface(this.term, {
+                        getKName: () => 'processUtil.launcherArgs',
+                        getValue: () => this.cb.getConfig.call(this, 'processUtil.launcherArgs'),
+                        setValue: (value) => {
+                            this.cb.setConfig.call(this, 'processUtil.launcherArgs', value)
+                            this.reInitialize();
+                        },
+                        validate: () => true
+                    }).initialize();
+                    break;
+                case 2:
                     this.cb.back.call(this);
                     break;
             }
@@ -299,6 +319,7 @@ export class PlayingInterface extends Interface {
                 this.cb.getCurrentEpisode.call(this).episode + 
                 '/' + 
                 this.cb.getEpisodes.call(this).length)
-            .white('\n');
+            .white('\n')
+            .green('Can\'t playback? Did you set the arguments for video player to add \'Referrer\' header?\n')
     }
 }

@@ -31,16 +31,19 @@ Terminal.terminal.on('key', (key) => {
 });
 
 // Set default value for config if not exists
-if (!config.get('initialized')) {
-    config.set('initialized', true);
-
+if (config.version !== 2) {
     // processUtil.launcher
+    // processUtil.launcherArgs
     if (processUtil.getStartCommandLineForCurrentOS('vlc') !== undefined) {
         config.set('processUtil.launcher', 'vlc');
+        config.set('processUtil.launcherArgs', '--http-referrer=\'http://example.com\''); // Set referrer to prevent vlc from blocking the site
     } else {
         // android
         config.set('processUtil.launcher', null);
+        config.set('processUtil.launcherArgs', null);
     }
+
+    config.version = 2;
 }
 
 function showSearchAnimeInterface(interfaces) {
@@ -134,7 +137,7 @@ function showDownloadInterface(interfaces, options) {
     const downloadPath = path.join(getDownloadFolderForCurrentOS(), options.selectedTitle.id + '-' + options.selectedEpisode.episode + '-' + options.selectedVideo.label.replaceAll(' ', '') + '.mp4');
     const downloadInterface = new DownloadInterface(Terminal.terminal, {
         download: (cb, complete) => {
-            fetch(options.fileURL)
+            fetch(options.fileURL, {headers: {'Referer': 'http://example.com'}})
                 .then(res => {
                     const length = res.headers.get('content-length');
                     let totalLengthReceived = 0;
@@ -169,7 +172,7 @@ function bulkDownload(interfaces, options) {
                 const url = (await episode.getAvailableVideos()).filterByVideoType('mp4').byHighResolution().file;
                 const downloadInterface = new DownloadInterface(Terminal.terminal, {
                     download: (cb, complete) => {
-                        fetch(url)
+                        fetch(url, {headers: {'Referer': 'http://example.com'}})
                             .then(res => {
                                 const length = res.headers.get('content-length');
                                 let totalLengthReceived = 0;
@@ -218,7 +221,7 @@ function playVideo(interfaces, options) {
         showVLCExitInterface({...interfaces, playingInterface}, options);
     }
 
-    processUtil.openURL(config.get('processUtil.launcher'), options.fileURL)
+    processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs').split(' '), options.fileURL)
         .then(onExit)
         .catch(() => {
             // VLC is not installed

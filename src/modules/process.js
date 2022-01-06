@@ -18,17 +18,17 @@ export function getStartCommandLineForCurrentOS(filePath) {
     }
 }
 
-export function openURL(commandLine, url) {
+export function openURL(executable, args, url) {
     return new Promise(async(resolve, reject) => {
         if (
             process.platform === 'android' || 
-            commandLine === null || 
+            executable === null || 
             debugging.forceRejectVLCInstalled
         ) {
             reject();
             return;
         }
-        child_process.spawn(commandLine, [url], { stdio: 'inherit' }).once('close', () => resolve()).once('error', () => reject());
+        child_process.spawn(executable, [...args, url], { stdio: 'inherit' }).once('close', () => resolve()).once('error', () => reject());
     });
 }
 
