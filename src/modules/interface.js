@@ -342,7 +342,5 @@ export class PlayingInterface extends Interface {
                 this.cb.getCurrentEpisode.call(this).episode + 
                 '/' + 
                 this.cb.getEpisodes.call(this).length)
-            .white('\n')
-            .green('Can\'t playback? Did you set the arguments for video player to add \'Referrer\' header?\n')
     }
 }

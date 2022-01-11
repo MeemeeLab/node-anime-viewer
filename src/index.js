@@ -22,6 +22,7 @@ import {
 import { getDownloadFolderForCurrentOS } from './modules/path.js';
 import history from './modules/history.js';
 import config from './modules/config.js';
+import Proxy from './modules/proxy.js';
 
 Terminal.terminal.on('key', (key) => {
     if (key === 'CTRL_C') {
@@ -37,7 +38,7 @@ if (config.version !== 2) {
     // processUtil.launcherArgs
     if (processUtil.getStartCommandLineForCurrentOS('vlc') !== undefined) {
         config.set('processUtil.launcher', 'vlc');
-        config.set('processUtil.launcherArgs', '--http-referrer=\'http://example.com\''); // Set referrer to prevent vlc from blocking the site
+        config.set('processUtil.launcherArgs', '');
     } else {
         // android
         config.set('processUtil.launcher', null);
@@ -222,11 +223,13 @@ function playVideo(interfaces, options) {
         showVLCExitInterface({...interfaces, playingInterface}, options);
     }
 
-    processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs').split(' '), options.fileURL)
+    const proxy = new Proxy(options.fileURL, {'Referer': 'http://example.com'});
+
+    processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs') === '' ? [] : config.get('processUtil.launcherArgs').split(' '), 'http://localhost:' + proxy.getPort())
         .then(onExit)
         .catch(() => {
             // VLC is not installed
-            processUtil.openDefaultApplication(options.fileURL)
+            processUtil.openDefaultApplication('http://localhost:' + proxy.getPort())
                 .then(onExit)
                 .catch(() => {
                     Terminal.terminal.clear();
