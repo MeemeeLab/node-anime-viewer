@@ -16,7 +16,8 @@ import {
     SelectActionInterface,
     DownloadInterface,
     PlayingInterface,
-    VLCExitInterface
+    VLCExitInterface,
+    WipeConfigInterface
 } from './modules/interface.js';
 import { getDownloadFolderForCurrentOS } from './modules/path.js';
 import history from './modules/history.js';
@@ -322,6 +323,34 @@ function showEditConfigInterface(interfaces) {
     editConfigInterface.initialize();
 }
 
+function showWipeConfigInterface(interfaces) {
+    const wipeConfigInterface = new WipeConfigInterface(Terminal.terminal, {
+        wipeConfig: () => {
+            config._config = {
+                version: 0,
+                data: {}
+            };
+            Terminal.terminal.clear();
+            Terminal.terminal.red('Wiping configuration requires restarting the application.\n');
+            Terminal.terminal.white('Press any key to exit...');
+            Terminal.terminal.once('key', () => {
+                process.exit(0);
+            });
+        },
+        wipeHistory: () => {
+            history._history = {
+                version: 1,
+                data: {}
+            };
+            interfaces.defaultInterface.reInitialize();
+        },
+        back: () => {
+            interfaces.defaultInterface.reInitialize();
+        }
+    });
+    wipeConfigInterface.initialize();
+}
+
 const defaultInterface = new DefaultInterface(Terminal.terminal, {
     searchAnime: () => {
         showSearchAnimeInterface({defaultInterface});
@@ -331,6 +360,9 @@ const defaultInterface = new DefaultInterface(Terminal.terminal, {
     },
     editConfig: () => {
         showEditConfigInterface({defaultInterface});
+    },
+    wipeConfig: () => {
+        showWipeConfigInterface({defaultInterface});
     }
 });
 defaultInterface.initialize();

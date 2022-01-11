@@ -38,7 +38,7 @@ export default class Interface {
 export class DefaultInterface extends Interface {
     initialize() {
         this.term.white('What do you want to do next?\n');
-        this.term.singleColumnMenu(['Search anime and play', 'Select anime from history', 'Edit configuration'], (err, input) => {
+        this.term.singleColumnMenu(['Search anime and play', 'Select anime from history', 'Edit configuration', 'Wipe configuration / history data'], (err, input) => {
             if (err) throw err;
             switch (input.selectedIndex) {
                 case 0:
@@ -49,6 +49,29 @@ export class DefaultInterface extends Interface {
                     break;
                 case 2:
                     this.cb.editConfig.call(this);
+                    break;
+                case 3:
+                    this.cb.wipeConfig.call(this);
+                    break;
+            }
+        });
+    }
+}
+
+export class WipeConfigInterface extends Interface {
+    initialize() {
+        this.term.red('WARNING! ').white('Are you sure you want to wipe data?\n');
+        this.term.singleColumnMenu(['Wipe configuration', 'Wipe history data', 'Go back'], (err, input) => {
+            if (err) throw err;
+            switch (input.selectedIndex) {
+                case 0:
+                    this.cb.wipeConfig.call(this);
+                    break;
+                case 1:
+                    this.cb.wipeHistory.call(this);
+                    break;
+                case 2:
+                    this.cb.back.call(this);
                     break;
             }
         });
