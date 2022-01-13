@@ -1,0 +1,47 @@
+name: "Bug report"
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue.
+
+        This template is for reporting bugs. Other kinds of issues (requests, etc) must be reported using another template.
+
+        Please fill in as much of the following form as you're able. You don't need to fill in all the fields, but it's good to be as specific as possible.
+  - type: input
+    attributes:
+      label: Version
+      description: Outputted by simply running a `node-anime-viewer`.
+  - type: input
+    attributes:
+      label: Platform
+      description: |
+        UNIX: output of `uname -a`
+        Windows: output of `"$([Environment]::OSVersion | ForEach-Object VersionString) $(if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" })"` in PowerShell console
+  - type: input
+    attributes:
+      label: Module
+      description: If known, please specify a module that is affected. (e.g. `anime.js`, `proxy.js`, `package.js`, etc.)
+  - type: textarea
+    attributes:
+      label: What steps will reproduce the bug?
+      description: Enter details about the bug.
+  - type: textarea
+    attributes:
+      label: How often does it reproduce? Is there a required condition?
+  - type: textarea
+    attributes:
+      label: What is the expected behavior?
+      description: If possible please provide textual output instead of screenshots.
+  - type: textarea
+    attributes:
+      label: What do you see instead?
+      description: If possible please provide textual output instead of screenshots.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Tell us anything else you think we should know.
