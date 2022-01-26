@@ -27,6 +27,7 @@ export class Proxy {
             agent: ignoreCertificateAgent,
             headers: Object.assign(req.headers, this.headerOverrides)
         }, (destinationRes) => {
+            res.writeHead(destinationRes.statusCode, destinationRes.headers);
             destinationRes.pipe(res);
         });
     }
