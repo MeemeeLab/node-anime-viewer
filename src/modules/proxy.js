@@ -1,5 +1,4 @@
 import http from 'http';
-import fetch from 'node-fetch';
 import https from 'https';
 
 const ignoreCertificateAgent = new https.Agent({
@@ -24,11 +23,12 @@ export class Proxy {
      * @param {http.ServerResponse} res 
      */
     _handleRequest(req, res) {
-        fetch(this.destination, {headers: Object.assign(req.headers, this.headerOverrides), agent: ignoreCertificateAgent})
-            .then(resp => {
-                res.writeHead(resp.status, resp.headers.raw());
-                resp.body.pipe(res);
-            });
+        https.get(this.destination, {
+            agent: ignoreCertificateAgent,
+            headers: Object.assign(req.headers, this.headerOverrides)
+        }, (destinationRes) => {
+            destinationRes.pipe(res);
+        });
     }
     getPort() {
         return this.server.address().port;
