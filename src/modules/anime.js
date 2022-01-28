@@ -41,7 +41,7 @@ function f_random(length) {
  * @param {string} id Id of the embedded video URL
  */
 function generateEncryptAjaxParameters($, id) {
-    const value6 = $('script[data-name=\x27ts\x27]').data('value');
+    const value6 = $('script[data-name=\x27ts\x27]').attr('data-value');
     const value5 = $("[name='crypto']").attr('content');
     const value1 = 
         CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt($('script[data-name=\x27crypto\x27]').data('value'), CryptoJS.enc.Utf8.parse(value6.toString() + value6.toString()), {
