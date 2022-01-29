@@ -225,7 +225,7 @@ function playVideo(interfaces, options) {
 
     const proxy = new Proxy(options.fileURL, {'Referer': 'http://example.com'});
 
-    processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs') === '' ? [] : config.get('processUtil.launcherArgs').split(' '), 'http://localhost:' + proxy.getPort())
+    processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs') ? config.get('processUtil.launcherArgs').split(' ') : [], 'http://localhost:' + proxy.getPort())
         .then(onExit)
         .catch(() => {
             // VLC is not installed
