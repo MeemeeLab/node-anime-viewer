@@ -44,7 +44,7 @@ function generateEncryptAjaxParameters($, id) {
     const value6 = $('script[data-name=\x27ts\x27]').data('value');
     const value5 = $("[name='crypto']").attr('content');
     const value1 = 
-        CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt($('script[data-name=\x27crypto\x27]').data('value'), CryptoJS.enc.Utf8.parse(value6.toString() + value6.toString()), {
+        CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt($('script[data-name=\x27crypto\x27]').data('value'), CryptoJS.enc.Utf8.parse(String(value6) + String(value6)), {
             iv: CryptoJS.enc.Utf8.parse(value6)
         }));
     const value4 = 
