@@ -139,7 +139,7 @@ function showDownloadInterface(interfaces, options) {
     const downloadPath = path.join(getDownloadFolderForCurrentOS(), options.selectedTitle.id + '-' + options.selectedEpisode.episode + '-' + options.selectedVideo.label.replaceAll(' ', '') + '.mp4');
     const downloadInterface = new DownloadInterface(Terminal.terminal, {
         download: (cb, complete) => {
-            fetch(options.fileURL, {headers: {'Referer': 'http://example.com'}})
+            fetch(options.fileURL, {headers: {'Referer': 'https://gogoplay5.com/streaming.php'}})
                 .then(res => {
                     const length = res.headers.get('content-length');
                     let totalLengthReceived = 0;
@@ -223,7 +223,7 @@ function playVideo(interfaces, options) {
         showVLCExitInterface({...interfaces, playingInterface}, options);
     }
 
-    const proxy = new Proxy(options.fileURL, {'Referer': 'http://example.com'});
+    const proxy = new Proxy(options.fileURL, {'Referer': 'https://gogoplay5.com/streaming.php'});
 
     processUtil.openURL(config.get('processUtil.launcher'), config.get('processUtil.launcherArgs') ? config.get('processUtil.launcherArgs').split(' ') : [], 'http://localhost:' + proxy.getPort())
         .then(onExit)

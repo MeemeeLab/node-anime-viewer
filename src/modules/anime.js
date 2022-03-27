@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import CryptoJS from 'crypto-js';
 import url from 'url';
 
-const BASEURL = "https://www3.gogoanime.cm";
+const BASEURL = "https://www.gogoanime.fi";
 const USERAGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36";
 
 // HELPER FUNCTIONS
@@ -35,27 +35,36 @@ function f_random(length) {
     return str;
 }
 
+const iv = CryptoJS.enc.Utf8.parse('1285672383939852');
+const ajaxData = CryptoJS.enc.Utf8.parse('25716538522938396164662278833288');
 /**
  * Parses the embedded video URL to encrypt-ajax.php parameters
  * @param {cheerio} $ Cheerio object of the embedded video page
  * @param {string} id Id of the embedded video URL
  */
 function generateEncryptAjaxParameters($, id) {
-    const value6 = $('script[data-name=\x27ts\x27]').data('value');
-    const value5 = $("[name='crypto']").attr('content');
-    const value1 = 
-        CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt($('script[data-name=\x27crypto\x27]').data('value'), CryptoJS.enc.Utf8.parse(value6.toString() + value6.toString()), {
-            iv: CryptoJS.enc.Utf8.parse(value6)
-        }));
-    const value4 = 
-        CryptoJS.AES.decrypt(value5, CryptoJS.enc.Utf8.parse(value1), {
-            iv: CryptoJS.enc.Utf8.parse(value6)
-        });
-    const value3 = CryptoJS.enc.Utf8.stringify(value4);
-    const value2 = f_random(16);
-    return 'id=' + CryptoJS.AES.encrypt(id, CryptoJS.enc.Utf8.parse(value1), {
-        iv: CryptoJS.enc.Utf8.parse(value2)
-    }).toString() + '&time=' + '00' + value2 + '00' + value3.substring(value3.indexOf('&'));
+    const
+        cryptVal = $("script[data-name='crypto']").data().value
+      , decryptedData = CryptoJS.AES['decrypt'](cryptVal, ajaxData, {
+            'iv': iv
+        })
+      , decryptedStr = CryptoJS.enc.Utf8.stringify(decryptedData)
+      , videoId = decryptedStr.substring(0, decryptedStr.indexOf('&'))
+      , encryptedVideoId = CryptoJS.AES['encrypt'](videoId, ajaxData, {
+            'iv': iv
+        }).toString();
+    return 'id=' + encryptedVideoId + decryptedStr.substring(decryptedStr.indexOf('&')) + '&alias=' + videoId;
+}
+
+/**
+ * Decrypts the encrypted-ajax.php response
+ * @param {object} obj Response from the server
+ */
+function decryptEncryptAjaxResponse(obj) {
+    const decrypted = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(obj.data, ajaxData, {
+        'iv': iv
+    }));
+    return JSON.parse(decrypted);
 }
 
 // CLASSES
@@ -135,7 +144,7 @@ export class AnimeEpisode {
                 'User-Agent': USERAGENT
             }
         });
-        const url = 'https:' + $('.vidcdn').find('a').attr('data-video');
+        const url = 'https:' + $('.play-video').find('iframe').attr('src');
         this._embedUrlCache = url;
         return url;
     }
@@ -148,13 +157,14 @@ export class AnimeEpisode {
             }
         });
         const params = generateEncryptAjaxParameters($, embed.query.id);
-        const response = await fetch(`${embed.protocol}//${embed.hostname}/encrypt-ajax.php?${params}`, {
+        const fetchRes = await fetch(`${embed.protocol}//${embed.hostname}/encrypt-ajax.php?${params}`, {
             headers: {
                 'User-Agent': USERAGENT,
                 'Referer': await this.getEmbedUrl(),
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(resp => resp.json());
+        const response = decryptEncryptAjaxResponse(fetchRes);
         const videos = new AnimeVideoCollection([]);
         response.source.forEach(v => videos._rawVideos.push(new AnimeVideo(v)));
         //response.source_bk.forEach(v => videos._rawVideos.push(new AnimeVideo(v)));
