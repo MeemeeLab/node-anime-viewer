@@ -35,8 +35,8 @@ function f_random(length) {
     return str;
 }
 
-const iv = CryptoJS.enc.Utf8.parse('1285672383939852');
-const ajaxData = CryptoJS.enc.Utf8.parse('25716538522938396164662278833288');
+const iv = CryptoJS.enc.Utf8.parse('4770478969418267');
+const ajaxData = CryptoJS.enc.Utf8.parse('63976882873559819639988080820907');
 /**
  * Parses the embedded video URL to encrypt-ajax.php parameters
  * @param {cheerio} $ Cheerio object of the embedded video page
@@ -44,7 +44,7 @@ const ajaxData = CryptoJS.enc.Utf8.parse('25716538522938396164662278833288');
  */
 function generateEncryptAjaxParameters($, id) {
     const
-        cryptVal = $("script[data-name='crypto']").data().value
+        cryptVal = $("script[data-name='episode']").data().value
       , decryptedData = CryptoJS.AES['decrypt'](cryptVal, ajaxData, {
             'iv': iv
         })
