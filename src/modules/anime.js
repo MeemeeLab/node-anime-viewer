@@ -5,6 +5,8 @@ import url from 'url';
 
 const BASEURL = "https://www.gogoanime.fi";
 const USERAGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36";
+// for dynamic keys
+const ENCRYPTION_KEYS_URL = "https://raw.githubusercontent.com/justfoolingaround/animdl-provider-benchmarks/master/api/gogoanime.json"
 
 // HELPER FUNCTIONS
 
@@ -25,9 +27,10 @@ function getRandomInt(min, max) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
 function f_random(length) {
-    var i = length
-      , str = '';
+    var i = length,
+        str = '';
     while (i > 0x0) {
         i--,
         str += getRandomInt(0, 9);
@@ -35,8 +38,21 @@ function f_random(length) {
     return str;
 }
 
-const iv = CryptoJS.enc.Utf8.parse('4770478969418267');
-const ajaxData = CryptoJS.enc.Utf8.parse('63976882873559819639988080820907');
+
+let iv = null;
+let ajaxData = null;
+let ajaxData2 = null;
+
+async function fetchKeys() {
+    return fetch(ENCRYPTION_KEYS_URL)
+        .then(res => res.json())
+        .then(json => {
+            iv = json.iv;
+            ajaxData = json.key;
+            ajaxData2 = json.second_key;
+        });
+}
+
 /**
  * Parses the embedded video URL to encrypt-ajax.php parameters
  * @param {cheerio} $ Cheerio object of the embedded video page
@@ -44,13 +60,13 @@ const ajaxData = CryptoJS.enc.Utf8.parse('63976882873559819639988080820907');
  */
 function generateEncryptAjaxParameters($, id) {
     const
-        cryptVal = $("script[data-name='episode']").data().value
-      , decryptedData = CryptoJS.AES['decrypt'](cryptVal, ajaxData, {
+        cryptVal = $("script[data-name='episode']").data().value,
+        decryptedData = CryptoJS.AES['decrypt'](cryptVal, ajaxData, {
             'iv': iv
-        })
-      , decryptedStr = CryptoJS.enc.Utf8.stringify(decryptedData)
-      , videoId = decryptedStr.substring(0, decryptedStr.indexOf('&'))
-      , encryptedVideoId = CryptoJS.AES['encrypt'](videoId, ajaxData, {
+        }),
+        decryptedStr = CryptoJS.enc.Utf8.stringify(decryptedData),
+        videoId = decryptedStr.substring(0, decryptedStr.indexOf('&')),
+        encryptedVideoId = CryptoJS.AES['encrypt'](videoId, ajaxData, {
             'iv': iv
         }).toString();
     return 'id=' + encryptedVideoId + decryptedStr.substring(decryptedStr.indexOf('&')) + '&alias=' + videoId;
@@ -99,7 +115,7 @@ export class AnimeVideoCollection {
      */
     _rawVideos;
 
-    constructor(rawVideos) {    
+    constructor(rawVideos) {
         this._rawVideos = rawVideos;
     }
 
@@ -156,6 +172,9 @@ export class AnimeEpisode {
                 'User-Agent': USERAGENT
             }
         });
+
+        await fetchKeys();
+
         const params = generateEncryptAjaxParameters($, embed.query.id);
         const fetchRes = await fetch(`${embed.protocol}//${embed.hostname}/encrypt-ajax.php?${params}`, {
             headers: {
