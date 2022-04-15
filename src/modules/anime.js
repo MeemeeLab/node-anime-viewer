@@ -77,7 +77,7 @@ function generateEncryptAjaxParameters($, id) {
  * @param {object} obj Response from the server
  */
 function decryptEncryptAjaxResponse(obj) {
-    const decrypted = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(obj.data, ajaxData, {
+    const decrypted = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(obj.data, ajaxData2, {
         'iv': iv
     }));
     return JSON.parse(decrypted);
