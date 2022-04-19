@@ -59,17 +59,17 @@ async function fetchKeys() {
  * @param {string} id Id of the embedded video URL
  */
 function generateEncryptAjaxParameters($, id) {
-    const
-        cryptVal = $("script[data-name='episode']").data().value,
-        decryptedData = CryptoJS.AES['decrypt'](cryptVal, ajaxData, {
-            'iv': iv
-        }),
-        decryptedStr = CryptoJS.enc.Utf8.stringify(decryptedData),
-        videoId = decryptedStr.substring(0, decryptedStr.indexOf('&')),
-        encryptedVideoId = CryptoJS.AES['encrypt'](videoId, ajaxData, {
-            'iv': iv
-        }).toString();
-    return 'id=' + encryptedVideoId + decryptedStr.substring(decryptedStr.indexOf('&')) + '&alias=' + videoId;
+
+    const encrypted_key = CryptoJS.AES['encrypt'](id, ajaxData, {
+        iv: iv,
+    });
+
+    const script = $("script[data-name='episode']").data().value
+    const token = CryptoJS.AES['decrypt'](script, ajaxData, {
+        iv: iv,
+    }).toString(CryptoJS.enc.Utf8);
+
+    return 'id=' + encrypted_key + '&alias=' + id + '&' + token;
 }
 
 /**
