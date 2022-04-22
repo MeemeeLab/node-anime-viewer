@@ -1,7 +1,7 @@
 # node-anime-viewer
 Nodejs implementation of ani-cli.  
 
-This project is very active and updated regularly. Don't forget to update regularly!
+# This project is not maintained regularly. The gogoanime website updates too quickly and we can't catch up.
 
 ### Issue (Feature request), Pull request are welcome!
 
